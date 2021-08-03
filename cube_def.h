@@ -123,58 +123,8 @@ namespace Cube {
 
 
     class MoveFactory {
-    protected:
-        // Basic symmetric moves
-        IMove S_URF3, S_F2, S_U4, S_LR2;
-
-        void setAsId(IMove &m) {
-            for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
-                m.move[i].pos_ = i;
-                m.move[i].ori_ = 0;
-            }
-        }
-
-        void setAsL(IMove &m) {
-            // TODO
-        }
-
-        void setAsR(IMove &m) {
-            // TODO
-        }
-
-        void setAsU(IMove &m) {
-            // TODO
-        }
-
-        void setAsD(IMove &m) {
-            // TODO
-        }
-
-        void setAsF(IMove &m) {
-            // TODO
-        }
-
-        void setAsB(IMove &m) {
-            // TODO
-        }
-
-        void setAsS_URF3(IMove &m) {
-            // TODO
-        }
-
-        void setAsS_F2(IMove &m) {
-            // TODO
-        }
-
-        void setAsS_U4(IMove &m) {
-            // TODO
-        }
-
-        void setAsS_LR2(IMove &m) {
-            // TODO
-        }
-
-    public:
+    private:
+        // Private constructors
         MoveFactory() {
             // Init id move
             setAsId(Id);
@@ -225,6 +175,68 @@ namespace Cube {
                     }
                 }
             }
+        }
+
+    protected:
+        // Basic symmetric moves
+        IMove S_URF3, S_F2, S_U4, S_LR2;
+
+        static void setAsId(IMove &m) {
+            for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
+                m.move[i].pos_ = i;
+                m.move[i].ori_ = 0;
+            }
+        }
+
+        void setAsL(IMove &m) {
+            // TODO
+        }
+
+        void setAsR(IMove &m) {
+            // TODO
+        }
+
+        void setAsU(IMove &m) {
+            // TODO
+        }
+
+        void setAsD(IMove &m) {
+            // TODO
+        }
+
+        void setAsF(IMove &m) {
+            // TODO
+        }
+
+        void setAsB(IMove &m) {
+            // TODO
+        }
+
+        void setAsS_URF3(IMove &m) {
+            // TODO
+        }
+
+        void setAsS_F2(IMove &m) {
+            // TODO
+        }
+
+        void setAsS_U4(IMove &m) {
+            // TODO
+        }
+
+        void setAsS_LR2(IMove &m) {
+            // TODO
+        }
+
+    public:
+        // Prevent instantiation
+        MoveFactory(MoveFactory &) = delete;
+
+        MoveFactory(MoveFactory &&) = delete;
+
+        static MoveFactory &getInstance() {
+            static auto INSTANCE = MoveFactory();
+            return INSTANCE;
         }
 
         // Identity move
