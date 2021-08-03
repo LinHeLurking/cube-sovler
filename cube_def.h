@@ -1,7 +1,3 @@
-//
-// Created by LinHeLurking on 2021-08-03.
-//
-
 #ifndef CUBE_SOLVER_CUBE_DEF_H
 #define CUBE_SOLVER_CUBE_DEF_H
 
@@ -9,15 +5,9 @@
 #include <cstdint>
 #include <algorithm>
 
+#include "utility.h"
+
 namespace Cube {
-
-    enum Color {
-        Green, Yellow, Red, Blue, Orange, White
-    };
-
-    enum BlockPos {
-        URF = 0, UFL, ULB, UBR, DFR, DLF, DBL, DRB, UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR
-    };
 
     class MoveResult {
     public:
@@ -36,7 +26,7 @@ namespace Cube {
             return move[pos];
         }
 
-        int getConorOrientationCoordinate() {
+        int getConorOrientationCoord() {
             int co = 0;
             // Summation of conor orientations is divided by 3.
             for (int i = BlockPos::URF; i < BlockPos::DRB; ++i) {
@@ -45,7 +35,7 @@ namespace Cube {
             return co;
         }
 
-        int getEdgeOrientationCoordinate() {
+        int getEdgeOrientationCoord() {
             int co = 0;
             // Summation of edge orientations is divided by 2.
             for (int i = BlockPos::UR; i < BlockPos::BR; ++i) {
@@ -54,7 +44,7 @@ namespace Cube {
             return co;
         }
 
-        int getConorPermutationCoordinate() {
+        int getConorPermutationCoord() {
             int co = 0;
             for (int i = BlockPos::DRB; i > BlockPos::URF; --i) {
                 int s = 0;
@@ -63,13 +53,13 @@ namespace Cube {
                         s += 1;
                     }
                 }
-                // (i+1) is the order of this conor.
+                // (i + 1) is the order of this conor.
                 co = (co + s) * (i + 1);
             }
             return co;
         }
 
-        int getEdgePermutationCoordinate() {
+        int getEdgePermutationCoord() {
             int co = 0;
 
             for (int i = BlockPos::BR; i > BlockPos::UR; --i) {
@@ -79,16 +69,76 @@ namespace Cube {
                         s += 1;
                     }
                 }
-                // (i+1) is the order of this conor.
-                co = (co + s) * (i + 1);
+                // (i + 1 - BlockPos::UR) is the order of this edge.
+                co = (co + s) * (i + 1 - BlockPos::UR);
             }
             return co;
         }
 
-        int getUDSliceCoordinate() {
-            // TODO
+        int getUDSliceCoord() {
+            bool occupied[12];
+            std::fill(occupied, occupied + 12, false);
+            for (int i = BlockPos::UR; i <= BlockPos::BR; ++i) {
+                if (move[i].pos_ >= BlockPos::FR) {
+                    occupied[i - BlockPos::UR] = true;
+                }
+            }
+            int s = 0, k = 3, n = 11;
+            ConstantFactory &CONSTANT = ConstantFactory.getInstance();
+            while (k >= 0) {
+                if (occupied[n]) {
+                    k -= 1;
+                }
+                s += static_cast<int>(CONSTANT.getBinomialCoefficient(n, k));
+                n -= 1;
+            }
+            return s;
         }
 
+        /*
+         * In phase 2, we only use the subgroup <U, D, L^2, R^2, F^2, B^2>
+         * */
+
+        int getPhase2EdgePermutationCoord() {
+            int co = 0;
+            for (int i = BlockPos::DB; i > BlockPos::UR; --i) {
+                int s = 0;
+                for (int j = i - 1; j >= BlockPos::UR; --j) {
+                    if (move[j].pos_ > move[i].pos_) {
+                        s += 1;
+                    }
+                }
+                // (i + 1 - BlockPos::UR) is the order of this edge.
+                co = (s + co) * (i + 1 - BlockPos::UR);
+            }
+        }
+
+        int getUDSliceSortedCoord() {
+            BlockPos arr[4];
+            for (int i = BlockPos::UR; i <= BlockPos::BR; ++i) {
+                BlockPos e = move[i].pos_;
+                if (e == BlockPos::FR || e == BlockPos::FL || e == BlockPos::BL || e == BlockPos::BR) {
+                    arr[j] = e;
+                    j += 1;
+                }
+            }
+
+            int co = 0;
+            for (int j = 3; j >= 1; --j) {
+                int s = 0;
+                for (int k = j - 1; k >= 0; --k) {
+                    if (arr[k] > arr[j]) {
+                        s += 1;
+                    }
+                }
+                co = (co + s) * j;
+            }
+            co = co + 24 * getUDSliceCoord();
+            return co;
+        }
+
+
+        // Composition Operators
         friend IMove &operator*=(const IMove &other) {
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
                 BlockPos otherPos = other.move[i].pos_;
@@ -235,7 +285,7 @@ namespace Cube {
         MoveFactory(MoveFactory &&) = delete;
 
         static MoveFactory &getInstance() {
-            static auto INSTANCE = MoveFactory();
+            static MoveFactory INSTANCE = MoveFactory();
             return INSTANCE;
         }
 

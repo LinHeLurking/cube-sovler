@@ -1,13 +1,17 @@
-//
-// Created by LinHeLurking on 2021-08-04.
-//
-
 #ifndef CUBE_SOLVER_UTILITY_H
 #define CUBE_SOLVER_UTILITY_H
 
-#include "cstdint"
+#include <cstdint>
 
 namespace Cube {
+    enum Color {
+        Green, Yellow, Red, Blue, Orange, White
+    };
+
+    enum BlockPos {
+        URF = 0, UFL, ULB, UBR, DFR, DLF, DBL, DRB, UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR
+    };
+
     class ConstantFactory {
     private:
         // Private constructor
@@ -41,7 +45,7 @@ namespace Cube {
         ConstantFactory(ConstantFactory &&) = delete;
 
         static ConstantFactory &getInstance() {
-            static auto INSTANCE = ConstantFactory();
+            static ConstantFactory INSTANCE = ConstantFactory();
             return INSTANCE;
         }
 
