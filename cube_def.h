@@ -145,8 +145,10 @@ namespace Cube {
                 int otherOri = other.move[i].ori_;
                 this->move[i].pos_ = this->move[otherPos].pos_;
                 this->move[i].ori_ = this->move[otherPos].ori_ + otherOri;
-                if (this->move[i].ori_ >= 3) {
+                if (i <= BlockPos::DRB && this->move[i].ori_ >= 3) {
                     this->move[i].ori_ -= 3;
+                } else if (i >= BlockPos::UR && this->move[i].ori_ >= 2) {
+                    this->move[i].ori_ -= 2;
                 }
             }
             return *this;
