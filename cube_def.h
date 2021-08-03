@@ -26,7 +26,7 @@ namespace Cube {
             return move[pos];
         }
 
-        int getConorOrientationCoord() {
+        int getConorOriCoord() {
             int co = 0;
             // Summation of conor orientations is divided by 3.
             for (int i = BlockPos::URF; i < BlockPos::DRB; ++i) {
@@ -35,7 +35,7 @@ namespace Cube {
             return co;
         }
 
-        int getEdgeOrientationCoord() {
+        int getEdgeOriCoord() {
             int co = 0;
             // Summation of edge orientations is divided by 2.
             for (int i = BlockPos::UR; i < BlockPos::BR; ++i) {
@@ -44,7 +44,7 @@ namespace Cube {
             return co;
         }
 
-        int getConorPermutationCoord() {
+        int getConorPermCoord() {
             int co = 0;
             for (int i = BlockPos::DRB; i > BlockPos::URF; --i) {
                 int s = 0;
@@ -59,7 +59,7 @@ namespace Cube {
             return co;
         }
 
-        int getEdgePermutationCoord() {
+        int getEdgePermCoord() {
             int co = 0;
 
             for (int i = BlockPos::BR; i > BlockPos::UR; --i) {
@@ -99,7 +99,7 @@ namespace Cube {
          * In phase 2, we only use the subgroup <U, D, L^2, R^2, F^2, B^2>
          * */
 
-        int getPhase2EdgePermutationCoord() {
+        int getPhase2EdgePermCoord() {
             int co = 0;
             for (int i = BlockPos::DB; i > BlockPos::UR; --i) {
                 int s = 0;
