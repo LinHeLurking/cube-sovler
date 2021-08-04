@@ -3,4 +3,4 @@ project(cube_solver)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(cube_solver cube_def.h utility.h test.cpp)
+add_executable(cube_solver cube_def.h utility.h test.cpp two_phase_solver.h)

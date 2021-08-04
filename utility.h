@@ -4,6 +4,11 @@
 #include <cstdint>
 
 namespace Cube {
+    enum BasicMoveName {
+        U, D, F, B, L, R,
+        Ui, Di, Fi, Bi, Li, Ri
+    };
+
     enum Color {
         Green, Yellow, Red, Blue, Orange, White
     };
