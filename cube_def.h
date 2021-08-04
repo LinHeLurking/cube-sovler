@@ -12,12 +12,14 @@ namespace Cube {
     class MoveResult {
     public:
         BlockPos pos_;
-        int ori_;
+        int8_t ori_;
     };
 
     class IMove {
     public:
         IMove() = default;
+
+        IMove(BlockPos pos, int8_t ori_) : pos_(pos), ori_(ori) {}
 
         MoveResult move[20];
 
@@ -164,7 +166,7 @@ namespace Cube {
             IMove ret;
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
                 ret.move[this->move[i].pos_].pos_ = i;
-                ret.move[this->move[i].pos_].ori_ = 3 - this->move[i].ori_;
+                ret.move[this->move[i].pos_].ori_ = static_cast<int8_t>(3) - this->move[i].ori_;
                 if (ret.move[i].ori_ >= 3) {
                     ret.move[i].ori_ -= 3;
                 }
@@ -190,12 +192,12 @@ namespace Cube {
             setAsB(B);
 
             // Init inverse of basic moves
-            Li = L.inverse();
-            Ri = R.inverse();
-            Ui = U.inverse();
-            Di = D.inverse();
-            Fi = F.inverse();
-            Bi = B.inverse();
+//            Li = L.inverse();
+//            Ri = R.inverse();
+//            Ui = U.inverse();
+//            Di = D.inverse();
+//            Fi = F.inverse();
+//            Bi = B.inverse();
 
             // Init basic symmetric moves
             setAsS_URF3(S_URF3);
@@ -241,27 +243,152 @@ namespace Cube {
         }
 
         void setAsL(IMove &m) {
-            // TODO
+
+            m.move[URF] = IMove(URF, 0);
+            m.move[UFL] = IMove(ULB, 1);
+            m.move[ULB] = IMove(DBL, 2);
+            m.move[UBR] = IMove(UBR, 0);
+            m.move[DFR] = IMove(DFR, 0);
+            m.move[DLF] = IMove(UFL, 2);
+            m.move[DBL] = IMove(DLF, 1);
+            m.move[DRB] = IMove(DRB, 0);
+
+            m.move[UR] = IMove(UR, 0);
+            m.move[UF] = IMove(UF, 0);
+            m.move[UL] = IMove(BL, 0);
+            m.move[UB] = IMove(UB, 0);
+            m.move[DR] = IMove(DR, 0);
+            m.move[DF] = IMove(DF, 0);
+            m.move[DL] = IMove(FL, 0);
+            m.move[DB] = IMove(DB, 0);
+            m.move[FR] = IMove(FR, 0);
+            m.move[FL] = IMove(UL, 0);
+            m.move[BL] = IMove(DL, 0);
+            m.move[BR] = IMove(BR, 0)
         }
 
         void setAsR(IMove &m) {
-            // TODO
+            m.move[URF] = IMove(DFR, 2);
+            m.move[UFL] = IMove(UFL, 0);
+            m.move[ULB] = IMove(ULB, 0);
+            m.move[UBR] = IMove(URF, 1);
+            m.move[DFR] = IMove(DRB, 1);
+            m.move[DLF] = IMove(DLF, 0);
+            m.move[DBL] = IMove(DBL, 0);
+            m.move[DRB] = IMove(UBR, 2);
+
+            m.move[UR] = IMove(FR, 0);
+            m.move[UF] = IMove(UF, 0);
+            m.move[UL] = IMove(UL, 0);
+            m.move[UB] = IMove(UB, 0);
+            m.move[DR] = IMove(BR, 0);
+            m.move[DF] = IMove(DF, 0);
+            m.move[DL] = IMove(DL, 0);
+            m.move[DB] = IMove(DB, 0);
+            m.move[FR] = IMove(DR, 0);
+            m.move[FL] = IMove(FL, 0);
+            m.move[BL] = IMove(BL, 0);
+            m.move[BR] = IMove(UR, 0);
+
         }
 
         void setAsU(IMove &m) {
-            // TODO
+            m.move[URF] = IMove(UBR, 0);
+            m.move[UFL] = IMove(URF, 0);
+            m.move[ULB] = IMove(UFL, 0);
+            m.move[UBR] = IMove(ULB, 0);
+            m.move[DFR] = IMove(DFR, 0);
+            m.move[DLF] = IMove(DLF, 0);
+            m.move[DBL] = IMove(DBL, 0);
+            m.move[DRB] = IMove(DRB, 0);
+
+
+            m.move[UR] = IMove(UB, 0);
+            m.move[UF] = IMove(UR, 0);
+            m.move[UL] = IMove(UF, 0);
+            m.move[UB] = IMove(UL, 0);
+            m.move[DR] = IMove(DR, 0);
+            m.move[DF] = IMove(DF, 0);
+            m.move[DL] = IMove(DL, 0);
+            m.move[DB] = IMove(DB, 0);
+            m.move[FR] = IMove(FR, 0);
+            m.move[FL] = IMove(FL, 0);
+            m.move[BL] = IMove(BL, 0);
+            m.move[BR] = IMove(BR, 0);
         }
 
         void setAsD(IMove &m) {
-            // TODO
+
+            m.move[URF] = IMove(URF, 0);
+            m.move[UFL] = IMove(UFL, 0);
+            m.move[ULB] = IMove(ULB, 0);
+            m.move[UBR] = IMove(UBR, 0);
+            m.move[DFR] = IMove(DLF, 0);
+            m.move[DLF] = IMove(DBL, 0);
+            m.move[DBL] = IMove(DRB, 0);
+            m.move[DRB] = IMove(DFR, 0);
+
+            m.move[UR] = IMove(UR, 0);
+            m.move[UF] = IMove(UF, 0);
+            m.move[UL] = IMove(UL, 0);
+            m.move[UB] = IMove(UB, 0);
+            m.move[DR] = IMove(DF, 0);
+            m.move[DF] = IMove(DL, 0);
+            m.move[DL] = IMove(DB, 0);
+            m.move[DB] = IMove(DR, 0);
+            m.move[FR] = IMove(FR, 0);
+            m.move[FL] = IMove(FL, 0);
+            m.move[BL] = IMove(BL, 0);
+            m.move[BR] = IMove(BR, 0);
         }
 
         void setAsF(IMove &m) {
-            // TODO
+            m.move[URF] = IMove(UFL, 1);
+            m.move[UFL] = IMove(DLF, 2);
+            m.move[ULB] = IMove(ULB, 0);
+            m.move[UBR] = IMove(UBR, 0);
+            m.move[DFR] = IMove(URF, 2);
+            m.move[DLF] = IMove(DFR, 1);
+            m.move[DBL] = IMove(DBL, 0);
+            m.move[DRB] = IMove(DRB, 0);
+
+            m.move[UR] = IMove(UR, 0);
+            m.move[UF] = IMove(FL, 1);
+            m.move[UL] = IMove(UL, 0);
+            m.move[UB] = IMove(UB, 0);
+            m.move[DR] = IMove(DR, 0);
+            m.move[DF] = IMove(FR, 1);
+            m.move[DL] = IMove(DL, 0);
+            m.move[DB] = IMove(DB, 0);
+            m.move[FR] = IMove(UF, 1);
+            m.move[FL] = IMove(DF, 1);
+            m.move[BL] = IMove(BL, 0);
+            m.move[BR] = IMove(BR, 0);
         }
 
         void setAsB(IMove &m) {
-            // TODO
+
+            m.move[URF] = IMove(URF, 0);
+            m.move[UFL] = IMove(UFL, 0);
+            m.move[ULB] = IMove(UBR, 1);
+            m.move[UBR] = IMove(DRB, 2);
+            m.move[DFR] = IMove(DFR, 0);
+            m.move[DLF] = IMove(DLF, 0);
+            m.move[DBL] = IMove(ULB, 2);
+            m.move[DRB] = IMove(DBL, 1);
+
+            m.move[UR] = IMove(UR, 0);
+            m.move[UF] = IMove(UF, 0);
+            m.move[UL] = IMove(UL, 0);
+            m.move[UB] = IMove(BR, 1);
+            m.move[DR] = IMove(DR, 0);
+            m.move[DF] = IMove(DF, 0);
+            m.move[DL] = IMove(DL, 0);
+            m.move[DB] = IMove(BL, 1);
+            m.move[FR] = IMove(FR, 0);
+            m.move[FL] = IMove(FL, 0);
+            m.move[BL] = IMove(UB, 1);
+            m.move[BR] = IMove(DB, 1);
         }
 
         void setAsS_URF3(IMove &m) {
@@ -296,7 +423,7 @@ namespace Cube {
 
         // Basic moves
         IMove L, R, U, D, F, B;
-        IMove Li, Ri, Ui, Di, Fi, Bi;
+//        IMove Li, Ri, Ui, Di, Fi, Bi;
 
         IMove Sym[48];
     };
