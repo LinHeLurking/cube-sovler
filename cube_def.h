@@ -235,14 +235,14 @@ namespace Cube {
         // Basic symmetric moves
         IMove S_URF3, S_F2, S_U4, S_LR2;
 
-        static void setAsId(IMove &m) {
+        static inline void setAsId(IMove &m) {
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
                 m.move[i].pos_ = i;
                 m.move[i].ori_ = 0;
             }
         }
 
-        void setAsL(IMove &m) {
+        static inline void setAsL(IMove &m) {
 
             m.move[URF] = IMove(URF, 0);
             m.move[UFL] = IMove(ULB, 1);
@@ -267,7 +267,7 @@ namespace Cube {
             m.move[BR] = IMove(BR, 0)
         }
 
-        void setAsR(IMove &m) {
+        static inline void setAsR(IMove &m) {
             m.move[URF] = IMove(DFR, 2);
             m.move[UFL] = IMove(UFL, 0);
             m.move[ULB] = IMove(ULB, 0);
@@ -292,7 +292,7 @@ namespace Cube {
 
         }
 
-        void setAsU(IMove &m) {
+        static inline void setAsU(IMove &m) {
             m.move[URF] = IMove(UBR, 0);
             m.move[UFL] = IMove(URF, 0);
             m.move[ULB] = IMove(UFL, 0);
@@ -317,7 +317,7 @@ namespace Cube {
             m.move[BR] = IMove(BR, 0);
         }
 
-        void setAsD(IMove &m) {
+        static inline void setAsD(IMove &m) {
 
             m.move[URF] = IMove(URF, 0);
             m.move[UFL] = IMove(UFL, 0);
@@ -342,7 +342,7 @@ namespace Cube {
             m.move[BR] = IMove(BR, 0);
         }
 
-        void setAsF(IMove &m) {
+        static inline void setAsF(IMove &m) {
             m.move[URF] = IMove(UFL, 1);
             m.move[UFL] = IMove(DLF, 2);
             m.move[ULB] = IMove(ULB, 0);
@@ -366,7 +366,7 @@ namespace Cube {
             m.move[BR] = IMove(BR, 0);
         }
 
-        void setAsB(IMove &m) {
+        static inline void setAsB(IMove &m) {
 
             m.move[URF] = IMove(URF, 0);
             m.move[UFL] = IMove(UFL, 0);
@@ -391,19 +391,19 @@ namespace Cube {
             m.move[BR] = IMove(DB, 1);
         }
 
-        void setAsS_URF3(IMove &m) {
+        static inline void setAsS_URF3(IMove &m) {
             // TODO
         }
 
-        void setAsS_F2(IMove &m) {
+        static inline void setAsS_F2(IMove &m) {
             // TODO
         }
 
-        void setAsS_U4(IMove &m) {
+        static inline void setAsS_U4(IMove &m) {
             // TODO
         }
 
-        void setAsS_LR2(IMove &m) {
+        static inline void setAsS_LR2(IMove &m) {
             // TODO
         }
 
