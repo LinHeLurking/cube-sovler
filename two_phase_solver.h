@@ -21,11 +21,11 @@ namespace Cube {
         }
 
     public:
-        std::vector<BasicMoveName> phaseOneSearch(const IMove &start) {
+        std::vector<BasicMoveName> phaseOneSearch(const CubeStatus &start) {
 
         }
 
-        std::vector<BasicMoveName> phaseTwoSearch(const IMove &start) {
+        std::vector<BasicMoveName> phaseTwoSearch(const CubeStatus &start) {
 
         }
     };

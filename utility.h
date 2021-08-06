@@ -1,12 +1,13 @@
 #ifndef CUBE_SOLVER_UTILITY_H
 #define CUBE_SOLVER_UTILITY_H
 
+#include <limits>
+#include <random>
 #include <cstdint>
 
 namespace Cube {
     enum BasicMoveName {
-        U, D, F, B, L, R,
-        Ui, Di, Fi, Bi, Li, Ri
+        U, D, F, B, L, R
     };
 
     enum Color {
@@ -18,7 +19,33 @@ namespace Cube {
     };
 
     class ConstantFactory {
-    private:
+    public:
+        static ConstantFactory &getInstance() {
+            static ConstantFactory INSTANCE;
+            return INSTANCE;
+        }
+
+        static constexpr unsigned IDX_BOUND = 18;
+
+        // Prevent instantiation
+        ConstantFactory(const ConstantFactory &) = delete;
+
+        void operator=(const ConstantFactory &) = delete;
+
+        int64_t getFactorial(int k) const {
+            return factorial_[k];
+        }
+
+        int64_t getBinomialCoefficient(int n, int k) {
+            return binomial_[n][k];
+        }
+
+    protected:
+        // Member variables
+
+        int64_t binomial_[IDX_BOUND][IDX_BOUND];
+        int64_t factorial_[IDX_BOUND];
+
         // Private constructor
         ConstantFactory() {
             factorial_[0] = 1;
@@ -35,31 +62,26 @@ namespace Cube {
                 }
             }
         }
+    };
 
-        // Member variables
-
-        int64_t binomial_[IDX_BOUND][IDX_BOUND];
-        int64_t factorial_[IDX_BOUND];
-
+    class RandomFactory {
     public:
-        constexpr unsigned IDX_BOUND = 18;
-
-        // Prevent instantiation
-        ConstantFactory(ConstantFactory &) = delete;
-
-        ConstantFactory(ConstantFactory &&) = delete;
-
-        static ConstantFactory &getInstance() {
-            static ConstantFactory INSTANCE = ConstantFactory();
+        static inline RandomFactory &getInstance() {
+            static RandomFactory INSTANCE;
             return INSTANCE;
         }
 
-        int64_t getFactorial(int k) const {
-            return factorial_[k];
-        }
+        RandomFactory(const RandomFactory &) = delete;
 
-        int64_t getBinomialCoefficient(int n, int k) {
-            return binomial_[n][k];
+        void operator=(const RandomFactory &) = delete;
+
+        std::mt19937 generator_;
+    protected:
+        std::random_device device_{};
+
+
+        RandomFactory() {
+            generator_ = std::mt19937(device_());
         }
     };
 }

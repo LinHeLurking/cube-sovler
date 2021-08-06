@@ -1,9 +1,12 @@
 #ifndef CUBE_SOLVER_CUBE_DEF_H
 #define CUBE_SOLVER_CUBE_DEF_H
 
+#include <string>
 #include <array>
 #include <cstdint>
 #include <algorithm>
+#include <random>
+#include <iostream>
 
 #include "utility.h"
 
@@ -13,13 +16,17 @@ namespace Cube {
     public:
         BlockPos pos_;
         int8_t ori_;
+
+        MoveResult() = default;
+
+        MoveResult(BlockPos pos, int8_t ori) : pos_(pos), ori_(ori) {}
+
+        MoveResult(int pos, int8_t ori) : pos_(static_cast<BlockPos>(pos)), ori_(ori) {}
     };
 
-    class IMove {
+    class CubeStatus {
     public:
-        IMove() = default;
-
-        IMove(BlockPos pos, int8_t ori_) : pos_(pos), ori_(ori) {}
+        CubeStatus() = default;
 
         MoveResult move[20];
 
@@ -86,19 +93,19 @@ namespace Cube {
                 }
             }
             int s = 0, k = 3, n = 11;
-            ConstantFactory &CONSTANT = ConstantFactory.getInstance();
+            ConstantFactory &constantFactory = ConstantFactory::getInstance();
             while (k >= 0) {
                 if (occupied[n]) {
                     k -= 1;
                 }
-                s += static_cast<int>(CONSTANT.getBinomialCoefficient(n, k));
+                s += static_cast<int>(constantFactory.getBinomialCoefficient(n, k));
                 n -= 1;
             }
             return s;
         }
 
         /*
-         * In phase 2, we only use the subgroup <U, D, L^2, R^2, F^2, B^2>
+         * In phase 2, we only use the subgroup <U_, D_, L_^2, R_^2, F_^2, B_^2>
          * */
 
         int getPhase2EdgePermCoord() {
@@ -113,10 +120,12 @@ namespace Cube {
                 // (i + 1 - BlockPos::UR) is the order of this edge.
                 co = (s + co) * (i + 1 - BlockPos::UR);
             }
+            return co;
         }
 
         int getUDSliceSortedCoord() {
             BlockPos arr[4];
+            int j;
             for (int i = BlockPos::UR; i <= BlockPos::BR; ++i) {
                 BlockPos e = move[i].pos_;
                 if (e == BlockPos::FR || e == BlockPos::FL || e == BlockPos::BL || e == BlockPos::BR) {
@@ -126,7 +135,7 @@ namespace Cube {
             }
 
             int co = 0;
-            for (int j = 3; j >= 1; --j) {
+            for (j = 3; j >= 1; --j) {
                 int s = 0;
                 for (int k = j - 1; k >= 0; --k) {
                     if (arr[k] > arr[j]) {
@@ -141,10 +150,13 @@ namespace Cube {
 
 
         // Composition Operators
-        friend IMove &operator*=(const IMove &other) {
+        CubeStatus &operator*=(const CubeStatus &other) {
+#ifdef DEBUG
+//            std::cout << "operator*=" << std::endl;
+#endif
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
                 BlockPos otherPos = other.move[i].pos_;
-                int otherOri = other.move[i].ori_;
+                int8_t otherOri = other.move[i].ori_;
                 this->move[i].pos_ = this->move[otherPos].pos_;
                 this->move[i].ori_ = this->move[otherPos].ori_ + otherOri;
                 if (i <= BlockPos::DRB && this->move[i].ori_ >= 3) {
@@ -156,16 +168,16 @@ namespace Cube {
             return *this;
         }
 
-        friend IMove operator*(const IMove &other) const {
-            IMove ret = IMove(*this);
+        CubeStatus operator*(const CubeStatus &other) const {
+            auto ret = CubeStatus(*this);
             ret *= other;
             return ret;
         }
 
-        IMove inverse() const {
-            IMove ret;
+        CubeStatus inverse() const {
+            CubeStatus ret;
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
-                ret.move[this->move[i].pos_].pos_ = i;
+                ret.move[this->move[i].pos_].pos_ = static_cast<BlockPos>(i);
                 ret.move[this->move[i].pos_].ori_ = static_cast<int8_t>(3) - this->move[i].ori_;
                 if (ret.move[i].ori_ >= 3) {
                     ret.move[i].ori_ -= 3;
@@ -177,27 +189,81 @@ namespace Cube {
 
 
     class MoveFactory {
+    public:
+        // Prevent instantiation
+        MoveFactory(MoveFactory &) = delete;
+
+        void operator=(MoveFactory &) = delete;
+
+        static MoveFactory &getInstance() {
+            static MoveFactory INSTANCE;
+            return INSTANCE;
+        }
+
+        inline CubeStatus &getMoveByEnum(BasicMoveName m) {
+            switch (m) {
+                case BasicMoveName::U:
+                    return U_;
+                case BasicMoveName::D:
+                    return D_;
+                case BasicMoveName::L:
+                    return L_;
+                case BasicMoveName::R:
+                    return R_;
+                case BasicMoveName::F:
+                    return F_;
+                case BasicMoveName::B:
+                    return B_;
+                default:
+                    throw std::runtime_error(std::string(__func__) + "Unexpected move name");
+                    break;
+            }
+        }
+
+        inline CubeStatus genRandomCube(uint64_t randomStep = 50) {
+            auto &randomFactory = RandomFactory::getInstance();
+            CubeStatus cur = Id_;
+            std::uniform_int_distribution<> dist;
+            while (randomStep-- > 0) {
+#ifdef DEBUG
+                std::cout << "randomStep: " << randomStep << std::endl;
+#endif
+                auto moveEnum = static_cast<BasicMoveName>(dist(randomFactory.generator_) % 6);
+                CubeStatus move = getMoveByEnum(moveEnum);
+                cur *= move;
+            }
+            return cur;
+        }
+
+        // Identity move
+        CubeStatus Id_;
+
+        // Basic moves
+        CubeStatus L_, R_, U_, D_, F_, B_;
+        //        CubeStatus Li, Ri, Ui, Di, Fi, Bi;
+
+        CubeStatus Sym_[48];
     private:
         // Private constructors
         MoveFactory() {
             // Init id move
-            setAsId(Id);
+            setAsId(Id_);
 
             // Init basic moves
-            setAsU(U);
-            setAsD(D);
-            setAsL(L);
-            setAsR(R);
-            setAsF(F);
-            setAsB(B);
+            setAsU(U_);
+            setAsD(D_);
+            setAsL(L_);
+            setAsR(R_);
+            setAsF(F_);
+            setAsB(B_);
 
             // Init inverse of basic moves
-//            Li = L.inverse();
-//            Ri = R.inverse();
-//            Ui = U.inverse();
-//            Di = D.inverse();
-//            Fi = F.inverse();
-//            Bi = B.inverse();
+//            Li = L_.inverse();
+//            Ri = R_.inverse();
+//            Ui = U_.inverse();
+//            Di = D_.inverse();
+//            Fi = F_.inverse();
+//            Bi = B_.inverse();
 
             // Init basic symmetric moves
             setAsS_URF3(S_URF3);
@@ -211,7 +277,7 @@ namespace Cube {
                     for (int c = 0; c < 4; ++c) {
                         for (int d = 0; d < 2; ++d) {
                             int idx = 16 * a + 8 * b + 2 * c + d;
-                            IMove S = Id;
+                            CubeStatus S = Id_;
                             for (int i = 0; i < a; ++i) {
                                 S *= S_URF3;
                             }
@@ -224,7 +290,7 @@ namespace Cube {
                             for (int i = 0; i < d; ++i) {
                                 S *= S_LR2;
                             }
-                            Sym[idx] = S;
+                            Sym_[idx] = S;
                         }
                     }
                 }
@@ -233,199 +299,179 @@ namespace Cube {
 
     protected:
         // Basic symmetric moves
-        IMove S_URF3, S_F2, S_U4, S_LR2;
+        CubeStatus S_URF3, S_F2, S_U4, S_LR2;
 
-        static inline void setAsId(IMove &m) {
+        static inline void setAsId(CubeStatus &m) {
             for (int i = BlockPos::URF; i <= BlockPos::BR; ++i) {
-                m.move[i].pos_ = i;
+                m.move[i].pos_ = static_cast<BlockPos>(i);
                 m.move[i].ori_ = 0;
             }
         }
 
-        static inline void setAsL(IMove &m) {
+        static inline void setAsL(CubeStatus &m) {
 
-            m.move[URF] = IMove(URF, 0);
-            m.move[UFL] = IMove(ULB, 1);
-            m.move[ULB] = IMove(DBL, 2);
-            m.move[UBR] = IMove(UBR, 0);
-            m.move[DFR] = IMove(DFR, 0);
-            m.move[DLF] = IMove(UFL, 2);
-            m.move[DBL] = IMove(DLF, 1);
-            m.move[DRB] = IMove(DRB, 0);
+            m.move[URF] = MoveResult(URF, 0);
+            m.move[UFL] = MoveResult(ULB, 1);
+            m.move[ULB] = MoveResult(DBL, 2);
+            m.move[UBR] = MoveResult(UBR, 0);
+            m.move[DFR] = MoveResult(DFR, 0);
+            m.move[DLF] = MoveResult(UFL, 2);
+            m.move[DBL] = MoveResult(DLF, 1);
+            m.move[DRB] = MoveResult(DRB, 0);
 
-            m.move[UR] = IMove(UR, 0);
-            m.move[UF] = IMove(UF, 0);
-            m.move[UL] = IMove(BL, 0);
-            m.move[UB] = IMove(UB, 0);
-            m.move[DR] = IMove(DR, 0);
-            m.move[DF] = IMove(DF, 0);
-            m.move[DL] = IMove(FL, 0);
-            m.move[DB] = IMove(DB, 0);
-            m.move[FR] = IMove(FR, 0);
-            m.move[FL] = IMove(UL, 0);
-            m.move[BL] = IMove(DL, 0);
-            m.move[BR] = IMove(BR, 0)
+            m.move[UR] = MoveResult(UR, 0);
+            m.move[UF] = MoveResult(UF, 0);
+            m.move[UL] = MoveResult(BL, 0);
+            m.move[UB] = MoveResult(UB, 0);
+            m.move[DR] = MoveResult(DR, 0);
+            m.move[DF] = MoveResult(DF, 0);
+            m.move[DL] = MoveResult(FL, 0);
+            m.move[DB] = MoveResult(DB, 0);
+            m.move[FR] = MoveResult(FR, 0);
+            m.move[FL] = MoveResult(UL, 0);
+            m.move[BL] = MoveResult(DL, 0);
+            m.move[BR] = MoveResult(BR, 0);
         }
 
-        static inline void setAsR(IMove &m) {
-            m.move[URF] = IMove(DFR, 2);
-            m.move[UFL] = IMove(UFL, 0);
-            m.move[ULB] = IMove(ULB, 0);
-            m.move[UBR] = IMove(URF, 1);
-            m.move[DFR] = IMove(DRB, 1);
-            m.move[DLF] = IMove(DLF, 0);
-            m.move[DBL] = IMove(DBL, 0);
-            m.move[DRB] = IMove(UBR, 2);
+        static inline void setAsR(CubeStatus &m) {
+            m.move[URF] = MoveResult(DFR, 2);
+            m.move[UFL] = MoveResult(UFL, 0);
+            m.move[ULB] = MoveResult(ULB, 0);
+            m.move[UBR] = MoveResult(URF, 1);
+            m.move[DFR] = MoveResult(DRB, 1);
+            m.move[DLF] = MoveResult(DLF, 0);
+            m.move[DBL] = MoveResult(DBL, 0);
+            m.move[DRB] = MoveResult(UBR, 2);
 
-            m.move[UR] = IMove(FR, 0);
-            m.move[UF] = IMove(UF, 0);
-            m.move[UL] = IMove(UL, 0);
-            m.move[UB] = IMove(UB, 0);
-            m.move[DR] = IMove(BR, 0);
-            m.move[DF] = IMove(DF, 0);
-            m.move[DL] = IMove(DL, 0);
-            m.move[DB] = IMove(DB, 0);
-            m.move[FR] = IMove(DR, 0);
-            m.move[FL] = IMove(FL, 0);
-            m.move[BL] = IMove(BL, 0);
-            m.move[BR] = IMove(UR, 0);
+            m.move[UR] = MoveResult(FR, 0);
+            m.move[UF] = MoveResult(UF, 0);
+            m.move[UL] = MoveResult(UL, 0);
+            m.move[UB] = MoveResult(UB, 0);
+            m.move[DR] = MoveResult(BR, 0);
+            m.move[DF] = MoveResult(DF, 0);
+            m.move[DL] = MoveResult(DL, 0);
+            m.move[DB] = MoveResult(DB, 0);
+            m.move[FR] = MoveResult(DR, 0);
+            m.move[FL] = MoveResult(FL, 0);
+            m.move[BL] = MoveResult(BL, 0);
+            m.move[BR] = MoveResult(UR, 0);
 
         }
 
-        static inline void setAsU(IMove &m) {
-            m.move[URF] = IMove(UBR, 0);
-            m.move[UFL] = IMove(URF, 0);
-            m.move[ULB] = IMove(UFL, 0);
-            m.move[UBR] = IMove(ULB, 0);
-            m.move[DFR] = IMove(DFR, 0);
-            m.move[DLF] = IMove(DLF, 0);
-            m.move[DBL] = IMove(DBL, 0);
-            m.move[DRB] = IMove(DRB, 0);
+        static inline void setAsU(CubeStatus &m) {
+            m.move[URF] = MoveResult(UBR, 0);
+            m.move[UFL] = MoveResult(URF, 0);
+            m.move[ULB] = MoveResult(UFL, 0);
+            m.move[UBR] = MoveResult(ULB, 0);
+            m.move[DFR] = MoveResult(DFR, 0);
+            m.move[DLF] = MoveResult(DLF, 0);
+            m.move[DBL] = MoveResult(DBL, 0);
+            m.move[DRB] = MoveResult(DRB, 0);
 
 
-            m.move[UR] = IMove(UB, 0);
-            m.move[UF] = IMove(UR, 0);
-            m.move[UL] = IMove(UF, 0);
-            m.move[UB] = IMove(UL, 0);
-            m.move[DR] = IMove(DR, 0);
-            m.move[DF] = IMove(DF, 0);
-            m.move[DL] = IMove(DL, 0);
-            m.move[DB] = IMove(DB, 0);
-            m.move[FR] = IMove(FR, 0);
-            m.move[FL] = IMove(FL, 0);
-            m.move[BL] = IMove(BL, 0);
-            m.move[BR] = IMove(BR, 0);
+            m.move[UR] = MoveResult(UB, 0);
+            m.move[UF] = MoveResult(UR, 0);
+            m.move[UL] = MoveResult(UF, 0);
+            m.move[UB] = MoveResult(UL, 0);
+            m.move[DR] = MoveResult(DR, 0);
+            m.move[DF] = MoveResult(DF, 0);
+            m.move[DL] = MoveResult(DL, 0);
+            m.move[DB] = MoveResult(DB, 0);
+            m.move[FR] = MoveResult(FR, 0);
+            m.move[FL] = MoveResult(FL, 0);
+            m.move[BL] = MoveResult(BL, 0);
+            m.move[BR] = MoveResult(BR, 0);
         }
 
-        static inline void setAsD(IMove &m) {
+        static inline void setAsD(CubeStatus &m) {
 
-            m.move[URF] = IMove(URF, 0);
-            m.move[UFL] = IMove(UFL, 0);
-            m.move[ULB] = IMove(ULB, 0);
-            m.move[UBR] = IMove(UBR, 0);
-            m.move[DFR] = IMove(DLF, 0);
-            m.move[DLF] = IMove(DBL, 0);
-            m.move[DBL] = IMove(DRB, 0);
-            m.move[DRB] = IMove(DFR, 0);
+            m.move[URF] = MoveResult(URF, 0);
+            m.move[UFL] = MoveResult(UFL, 0);
+            m.move[ULB] = MoveResult(ULB, 0);
+            m.move[UBR] = MoveResult(UBR, 0);
+            m.move[DFR] = MoveResult(DLF, 0);
+            m.move[DLF] = MoveResult(DBL, 0);
+            m.move[DBL] = MoveResult(DRB, 0);
+            m.move[DRB] = MoveResult(DFR, 0);
 
-            m.move[UR] = IMove(UR, 0);
-            m.move[UF] = IMove(UF, 0);
-            m.move[UL] = IMove(UL, 0);
-            m.move[UB] = IMove(UB, 0);
-            m.move[DR] = IMove(DF, 0);
-            m.move[DF] = IMove(DL, 0);
-            m.move[DL] = IMove(DB, 0);
-            m.move[DB] = IMove(DR, 0);
-            m.move[FR] = IMove(FR, 0);
-            m.move[FL] = IMove(FL, 0);
-            m.move[BL] = IMove(BL, 0);
-            m.move[BR] = IMove(BR, 0);
+            m.move[UR] = MoveResult(UR, 0);
+            m.move[UF] = MoveResult(UF, 0);
+            m.move[UL] = MoveResult(UL, 0);
+            m.move[UB] = MoveResult(UB, 0);
+            m.move[DR] = MoveResult(DF, 0);
+            m.move[DF] = MoveResult(DL, 0);
+            m.move[DL] = MoveResult(DB, 0);
+            m.move[DB] = MoveResult(DR, 0);
+            m.move[FR] = MoveResult(FR, 0);
+            m.move[FL] = MoveResult(FL, 0);
+            m.move[BL] = MoveResult(BL, 0);
+            m.move[BR] = MoveResult(BR, 0);
         }
 
-        static inline void setAsF(IMove &m) {
-            m.move[URF] = IMove(UFL, 1);
-            m.move[UFL] = IMove(DLF, 2);
-            m.move[ULB] = IMove(ULB, 0);
-            m.move[UBR] = IMove(UBR, 0);
-            m.move[DFR] = IMove(URF, 2);
-            m.move[DLF] = IMove(DFR, 1);
-            m.move[DBL] = IMove(DBL, 0);
-            m.move[DRB] = IMove(DRB, 0);
+        static inline void setAsF(CubeStatus &m) {
+            m.move[URF] = MoveResult(UFL, 1);
+            m.move[UFL] = MoveResult(DLF, 2);
+            m.move[ULB] = MoveResult(ULB, 0);
+            m.move[UBR] = MoveResult(UBR, 0);
+            m.move[DFR] = MoveResult(URF, 2);
+            m.move[DLF] = MoveResult(DFR, 1);
+            m.move[DBL] = MoveResult(DBL, 0);
+            m.move[DRB] = MoveResult(DRB, 0);
 
-            m.move[UR] = IMove(UR, 0);
-            m.move[UF] = IMove(FL, 1);
-            m.move[UL] = IMove(UL, 0);
-            m.move[UB] = IMove(UB, 0);
-            m.move[DR] = IMove(DR, 0);
-            m.move[DF] = IMove(FR, 1);
-            m.move[DL] = IMove(DL, 0);
-            m.move[DB] = IMove(DB, 0);
-            m.move[FR] = IMove(UF, 1);
-            m.move[FL] = IMove(DF, 1);
-            m.move[BL] = IMove(BL, 0);
-            m.move[BR] = IMove(BR, 0);
+            m.move[UR] = MoveResult(UR, 0);
+            m.move[UF] = MoveResult(FL, 1);
+            m.move[UL] = MoveResult(UL, 0);
+            m.move[UB] = MoveResult(UB, 0);
+            m.move[DR] = MoveResult(DR, 0);
+            m.move[DF] = MoveResult(FR, 1);
+            m.move[DL] = MoveResult(DL, 0);
+            m.move[DB] = MoveResult(DB, 0);
+            m.move[FR] = MoveResult(UF, 1);
+            m.move[FL] = MoveResult(DF, 1);
+            m.move[BL] = MoveResult(BL, 0);
+            m.move[BR] = MoveResult(BR, 0);
         }
 
-        static inline void setAsB(IMove &m) {
+        static inline void setAsB(CubeStatus &m) {
 
-            m.move[URF] = IMove(URF, 0);
-            m.move[UFL] = IMove(UFL, 0);
-            m.move[ULB] = IMove(UBR, 1);
-            m.move[UBR] = IMove(DRB, 2);
-            m.move[DFR] = IMove(DFR, 0);
-            m.move[DLF] = IMove(DLF, 0);
-            m.move[DBL] = IMove(ULB, 2);
-            m.move[DRB] = IMove(DBL, 1);
+            m.move[URF] = MoveResult(URF, 0);
+            m.move[UFL] = MoveResult(UFL, 0);
+            m.move[ULB] = MoveResult(UBR, 1);
+            m.move[UBR] = MoveResult(DRB, 2);
+            m.move[DFR] = MoveResult(DFR, 0);
+            m.move[DLF] = MoveResult(DLF, 0);
+            m.move[DBL] = MoveResult(ULB, 2);
+            m.move[DRB] = MoveResult(DBL, 1);
 
-            m.move[UR] = IMove(UR, 0);
-            m.move[UF] = IMove(UF, 0);
-            m.move[UL] = IMove(UL, 0);
-            m.move[UB] = IMove(BR, 1);
-            m.move[DR] = IMove(DR, 0);
-            m.move[DF] = IMove(DF, 0);
-            m.move[DL] = IMove(DL, 0);
-            m.move[DB] = IMove(BL, 1);
-            m.move[FR] = IMove(FR, 0);
-            m.move[FL] = IMove(FL, 0);
-            m.move[BL] = IMove(UB, 1);
-            m.move[BR] = IMove(DB, 1);
+            m.move[UR] = MoveResult(UR, 0);
+            m.move[UF] = MoveResult(UF, 0);
+            m.move[UL] = MoveResult(UL, 0);
+            m.move[UB] = MoveResult(BR, 1);
+            m.move[DR] = MoveResult(DR, 0);
+            m.move[DF] = MoveResult(DF, 0);
+            m.move[DL] = MoveResult(DL, 0);
+            m.move[DB] = MoveResult(BL, 1);
+            m.move[FR] = MoveResult(FR, 0);
+            m.move[FL] = MoveResult(FL, 0);
+            m.move[BL] = MoveResult(UB, 1);
+            m.move[BR] = MoveResult(DB, 1);
         }
 
-        static inline void setAsS_URF3(IMove &m) {
+        static inline void setAsS_URF3(CubeStatus &m) {
             // TODO
         }
 
-        static inline void setAsS_F2(IMove &m) {
+        static inline void setAsS_F2(CubeStatus &m) {
             // TODO
         }
 
-        static inline void setAsS_U4(IMove &m) {
+        static inline void setAsS_U4(CubeStatus &m) {
             // TODO
         }
 
-        static inline void setAsS_LR2(IMove &m) {
+        static inline void setAsS_LR2(CubeStatus &m) {
             // TODO
         }
-
-    public:
-        // Prevent instantiation
-        MoveFactory(MoveFactory &) = delete;
-
-        MoveFactory(MoveFactory &&) = delete;
-
-        static MoveFactory &getInstance() {
-            static MoveFactory INSTANCE = MoveFactory();
-            return INSTANCE;
-        }
-
-        // Identity move
-        IMove Id;
-
-        // Basic moves
-        IMove L, R, U, D, F, B;
-//        IMove Li, Ri, Ui, Di, Fi, Bi;
-
-        IMove Sym[48];
     };
 }
 
