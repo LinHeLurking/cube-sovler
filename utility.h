@@ -36,7 +36,7 @@ namespace Cube {
             return factorial_[k];
         }
 
-        int64_t getBinomialCoefficient(int n, int k) {
+        int64_t getBiCoef(int n, int k) {
             return binomial_[n][k];
         }
 
